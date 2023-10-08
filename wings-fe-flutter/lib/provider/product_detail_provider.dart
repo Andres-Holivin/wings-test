@@ -13,6 +13,7 @@ class ProductDetailProvider extends ChangeNotifier {
     status = Status.loading;
     notifyListeners();
     final response = await _service.getProductDetail(productCode: code);
+    print("reponse " + response.toString());
     if (response.isEmpty) {
       status = Status.failed;
     } else {

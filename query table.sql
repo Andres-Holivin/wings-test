@@ -19,7 +19,8 @@ CREATE TABLE Product(
     Unit VARCHAR(5)
 );
 INSERT INTO Product 
-VALUES ('SKUUSKLINP','So Klin Pewangi',15000,'IDR',10,'13 cm x 10 cm','PCS');
+VALUES ('SKUUSKLINP','So Klin Pewangi',15000,'IDR',10,'13 cm x 10 cm','PCS'),
+ ('SKUUSKLINS','So Klin',12000,'IDR',0,'13 cm x 10 cm','PCS');
 
 
 DROP TABLE IF EXISTS TransactionHeader;
@@ -51,6 +52,3 @@ select * from login;
 select * from "product";
 select * from "TransactionHeader";
 select * from "TransactionDetail";
-
-SELECT product."ProductCode" AS "product_ProductCode", product."ProductName" AS "product_ProductName", product."Price" AS "product_Price", product."Currency" AS "product_Currency", product."Discount" AS "product_Discount", product."Dimension" AS "product_Dimension", product."Unit" AS "product_Unit" 
-FROM product
