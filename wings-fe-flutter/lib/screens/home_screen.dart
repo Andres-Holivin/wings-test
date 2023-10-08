@@ -2,6 +2,10 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:wings/models/status_enum.dart';
+import 'package:wings/provider/home_provider.dart';
+import 'package:wings/provider/login_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -11,25 +15,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // List<dynamic>
-  final dio = Dio();
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    request();
-  }
-
-  void request() async {
-    Response response;
-    try {
-      response = await dio.get('http://127.0.0.1:8000/product');
-      print(response.data.toString());
-      var res = json.decode(response.data.toString()).toString();
-      print(res);
-    } catch (e) {
-      print(e);
-    }
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      Provider.of<HomeProvider>(context, listen: false).getProduct();
+    });
   }
 
   @override
@@ -37,33 +28,44 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(centerTitle: true, title: Text("List Product")),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                    children: List.generate(10, (index) {
-                  return Product();
-                })),
+        child: Consumer<HomeProvider>(builder: (context, value, child) {
+          if (value.status == Status.loading) {
+            return const CircularProgressIndicator();
+          }
+          if (value.status == Status.failed) {
+            return const Text("error");
+          }
+          return Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                      children: List.generate(value.product.length, (index) {
+                    return Product(product: value.product[index]);
+                  })),
+                ),
               ),
-            ),
-            TextButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, "check_out");
-                },
-                child: Text("CheckOut"))
-          ],
-        ),
+              Column(
+                children: [
+                  Divider(),
+                  FilledButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, "check_out");
+                      },
+                      child: Text("CheckOut"))
+                ],
+              )
+            ],
+          );
+        }),
       ),
     );
   }
 }
 
 class Product extends StatelessWidget {
-  const Product({
-    super.key,
-  });
-
+  const Product({super.key, required this.product});
+  final Map<String, dynamic> product;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -71,29 +73,33 @@ class Product extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         child: Row(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18.0),
-              child: const CircleAvatar(radius: 40),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 18.0),
+              child: CircleAvatar(radius: 40),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Product",
+                  product['productname'],
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
+                product['discount'] != 0
+                    ? Text(
+                        "Rp.${product['price']},-",
+                        style: const TextStyle(
+                            decoration: TextDecoration.lineThrough,
+                            fontSize: 10),
+                      )
+                    : SizedBox(),
                 Text(
-                  "Rp.10000" + ",-",
-                  style: TextStyle(
-                      decoration: TextDecoration.lineThrough, fontSize: 10),
-                ),
-                Text(
-                  "Rp.10000",
+                  "Rp.${(product['price'] * (100 - product['discount']) / 100).floor()},-",
                   style: TextStyle(fontSize: 12),
                 ),
-                TextButton(
+                FilledButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, "detail_product");
+                      Navigator.pushNamed(
+                          context, "detail_product/${product['productcode']}");
                     },
                     child: Text("Buy"))
               ],

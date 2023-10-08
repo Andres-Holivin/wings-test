@@ -19,7 +19,7 @@ class Routes {
   });
   static var detailProductRouter = Handler(
       handlerFunc: (BuildContext? context, Map<String, dynamic> params) {
-    return DetailProductScreen();
+    return DetailProductScreen(productCode: params["id"][0]);
   });
   static var checkOutRouter = Handler(
       handlerFunc: (BuildContext? context, Map<String, dynamic> params) {
@@ -31,7 +31,7 @@ class Routes {
         handler: singInRouter, transitionType: TransitionType.fadeIn);
     router.define("home",
         handler: homeRouter, transitionType: TransitionType.inFromLeft);
-    router.define("detail_product",
+    router.define("detail_product/:id",
         handler: detailProductRouter,
         transitionType: TransitionType.inFromLeft);
     router.define("check_out",

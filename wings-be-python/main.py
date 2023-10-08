@@ -37,20 +37,26 @@ class User(BaseModel):
     password: str
 
 
-@app.post("/users/")
+@app.post("/users")
 def read_users(user: User, db: Session = Depends(get_db)):
-    users = db.query(model.Login).filter(model.Login.username == user.username).first()
-    print(users)
-    if users != null and users.password == user.password:
-        return users
+    db_user = db.query(model.Login).filter(model.Login.username == user.username).first()
+    print(db_user)
+    if db_user != None and str(db_user.password) == user.password:
+        return db_user
+    return null
+    
 
-    return
 
-
-@app.get("/product/")
-def read_users(db: Session = Depends(get_db)):
+@app.get("/product")
+def read_products(db: Session = Depends(get_db)):
     users = db.query(model.Product).all()
     return users
+
+@app.get("/product/detail/{code}")
+def read_product_detail( code:str, db: Session = Depends(get_db)):
+    users = db.query(model.Product).filter(model.Product.productcode==code).first()
+    return users
+
 
 
 class TransactionProduct(BaseModel):
@@ -65,24 +71,36 @@ class Transaction(BaseModel):
 
 
 @app.post("/transaction")
-def read_users(transaction: Transaction, db: Session = Depends(get_db)):
+def create_transaction(transaction: Transaction, db: Session = Depends(get_db)):
     doc_code = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(3))
     doc_num = random.randint(pow(10, 3 - 1), pow(10, 3) - 1)
+    total=0
 
-    trans_header = model.TransactionHeader(documentcode=doc_code, documentnumber=doc_code,
+    trans_detail=[]
+    for trans in Transaction.product:
+        sub_total=trans.qty*trans.price
+        total+=sub_total
+        trans_detail.append(model.TransactionDetail(documentcode=doc_code, 
+                                                    documentnumber=doc_num,
+                                                    productcode=trans.code,
+                                                    quantity=trans.qty,
+                                                    subtotal=sub_total,
+                                                    date=date.today()))
+    trans_header = model.TransactionHeader(documentcode=doc_code, 
+                                           documentnumber=doc_code,
                                            username=transaction.username,
-                                           date=date.today())
-    trans_detail = model.TransactionDetail(documentcode=doc_code, documentnumber=doc_code,
-                                           productcode=transaction.username,
+                                           total=total,
                                            date=date.today())
     db.add(trans_header)
+    db.add(trans_detail)
+    db.commit()
     # return users
 
 
 if __name__ == '__main__':
     uvicorn.run(
-        "__main__:app",
+        "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=8001,
         reload=True
     )

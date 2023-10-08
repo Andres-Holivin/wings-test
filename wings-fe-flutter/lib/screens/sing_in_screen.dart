@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:wings/provider/login_provider.dart';
+
+import '../models/status_enum.dart';
 
 class SingInScreen extends StatelessWidget {
   const SingInScreen({super.key});
@@ -6,12 +10,33 @@ class SingInScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text("Login"),
+        centerTitle: true,
+      ),
       body: SafeArea(
         child: Center(
-          child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [Text("Login"), SingForm()]),
+          child: Consumer<LoginProvider>(
+            builder: (c, value, child) {
+              if (value.status == Status.loading) {
+                return (const CircularProgressIndicator());
+              }
+              if (value.status == Status.success) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  Navigator.pushReplacementNamed(c, "home");
+                });
+              }
+              return Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    value.status == Status.failed
+                        ? Text("Error Login")
+                        : SizedBox(),
+                    SingForm()
+                  ]);
+            },
+          ),
         ),
       ),
     );
@@ -66,15 +91,16 @@ class _SingFormState extends State<SingForm> {
                         style: TextStyle(color: Colors.red),
                       )),
             ),
-            TextButton(
+            FilledButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
                     _formKey.currentState!.save();
-
-                    Navigator.pushReplacementNamed(context, "home");
+                    context
+                        .read<LoginProvider>()
+                        .loginUser(username: username, password: password);
                   }
                 },
-                child: Text("Login"))
+                child: const Text("Login"))
           ],
         ),
       ),
